@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>test</title>
-    <url>/2022/03/11/test/</url>
-    <content><![CDATA[<p>ttttttttt<br>hshkhkg</p>
+    <title>aaa</title>
+    <url>/2022/03/11/aaa/</url>
+    <content><![CDATA[<p>aaaaa<br><img src="/1.jpg"></p>
 ]]></content>
       <categories>
-        <category>test</category>
-        <category>test1</category>
+        <category>aaa</category>
       </categories>
   </entry>
 </search>
