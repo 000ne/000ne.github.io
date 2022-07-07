@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>docker环境代理配置</title>
+    <url>/2022/07/07/docker%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE/</url>
+    <content><![CDATA[<p>一、背景</p>
+<p>记一次在客户现场配置环境遇到的问题，靶机不出网，通过socks5代理临时出网，这里客户配置了只能curl和yum，docker并不走代理，所以导致了docker在配置国内源后，并不能进行更新。</p>
+<span id="more"></span>
+<p>二、docker代理配置</p>
+<pre><code>sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo touch /etc/systemd/system/docker.service.d/proxy.conf
+</code></pre>
+<p>创建好文件后，将一下内容写入文件</p>
+<pre><code>[Service]
+Environment=&quot;HTTP_PROXY=http://proxy.example.com:8080/&quot;
+Environment=&quot;HTTPS_PROXY=http://proxy.example.com:8080/&quot;
+Environment=&quot;NO_PROXY=localhost,127.0.0.1,.example.com&quot;
+</code></pre>
+<p>三、重启docker</p>
+<pre><code>重启docker daemon
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+查看是否配置成功
+systemctl show --property=Environment docker
+</code></pre>
+<p>此时docker可以正常进行更新。</p>
+]]></content>
+      <categories>
+        <category>docker</category>
+        <category>debug</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Apache ActiveMQ序列化漏洞(CVE-2015-5254)复现</title>
     <url>/2022/03/30/vulhub-cve-2015-5254/</url>
     <content><![CDATA[<p>一、介绍<br>1.1 简介</p>
