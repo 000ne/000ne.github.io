@@ -1,6 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Docker-Compose 自动创建的网桥与局域网冲突的解决方案</title>
+    <url>/2022/07/07/Docker-Compose-%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA%E7%9A%84%E7%BD%91%E6%A1%A5%E4%B8%8E%E5%B1%80%E5%9F%9F%E7%BD%91%E5%86%B2%E7%AA%81%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<p>一、问题描述</p>
+<p>在使用 docker-compose 部署应用时， docker 默认的网络模式是 bridge ，默认网段是 172.17.0.1&#x2F;16。十分不巧的是我们自己物理机的局域网也使用的是 172.18.0.1&#x2F;16 的网段。在执行 docker-compose -f docker-compose.yml up -d 部署服务后，自动生成的网桥会依次使用 172.18.x.x，然而悲催的事情发生了。docker 生成的网桥与局域网冲突了。</p>
+<p>二、解决方案</p>
+<pre><code>1、停止docker
+docker-compose -f docker-compose.yml down
+2、删除doker创建网桥
+docker nerwork rm br-xxx(注：如果正常关闭容器不会有残留的网桥)
+3、修改 daemon.json
+vi /etc/docker/daemon.json
+
+添加以下内容：
+&quot;default-address-pools&quot; : [
+&#123;
+  &quot;base&quot; : &quot;192.168.0.0/16&quot;,
+  &quot;size&quot; : 24
+&#125;
+]
+4、重启docekr
+sudo systemctl daemon-reload
+sudo systemctl start docker
+5、重新启动docker-compose
+docker-compose -f docker-compose.yml up -d
+</code></pre>
+]]></content>
+      <categories>
+        <category>docker</category>
+        <category>debug</category>
+      </categories>
+  </entry>
+  <entry>
     <title>docker环境代理配置</title>
     <url>/2022/07/07/docker%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE/</url>
     <content><![CDATA[<p>一、背景</p>
@@ -164,35 +196,32 @@ b、需要弱密码登录
       </categories>
   </entry>
   <entry>
-    <title>Docker-Compose 自动创建的网桥与局域网冲突的解决方案</title>
-    <url>/2022/07/07/Docker-Compose-%E8%87%AA%E5%8A%A8%E5%88%9B%E5%BB%BA%E7%9A%84%E7%BD%91%E6%A1%A5%E4%B8%8E%E5%B1%80%E5%9F%9F%E7%BD%91%E5%86%B2%E7%AA%81%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<p>一、问题描述</p>
-<p>在使用 docker-compose 部署应用时， docker 默认的网络模式是 bridge ，默认网段是 172.17.0.1&#x2F;16。十分不巧的是我们自己物理机的局域网也使用的是 172.18.0.1&#x2F;16 的网段。在执行 docker-compose -f docker-compose.yml up -d 部署服务后，自动生成的网桥会依次使用 172.18.x.x，然而悲催的事情发生了。docker 生成的网桥与局域网冲突了。</p>
-<p>二、解决方案</p>
-<pre><code>1、停止docker
-docker-compose -f docker-compose.yml down
-2、删除doker创建网桥
-docker nerwork rm br-xxx(注：如果正常关闭容器不会有残留的网桥)
-3、修改 daemon.json
-vi /etc/docker/daemon.json
-
-添加以下内容：
-&quot;default-address-pools&quot; : [
-&#123;
-  &quot;base&quot; : &quot;192.168.0.0/16&quot;,
-  &quot;size&quot; : 24
-&#125;
-]
-4、重启docekr
-sudo systemctl daemon-reload
-sudo systemctl start docker
-5、重新启动docker-compose
-docker-compose -f docker-compose.yml up -d
-</code></pre>
+    <title>win10子系统无法使用ssh连接</title>
+    <url>/2022/08/08/win10%E5%AD%90%E7%B3%BB%E7%BB%9F%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8ssh%E8%BF%9E%E6%8E%A5/</url>
+    <content><![CDATA[<p>一、背景</p>
+<p>搭建frp ssh隧道<br>攻击机：win10子系统 kali<br>服务端：vps<br>客户端：centos 7 mini</p>
+<p>在成功搭建frp后，发现无法ssh到内网的centos7，一开始以为是centos7的问题，于是对centos的sshd进行重装，发现并没有解决，随后又重装的了整个靶机，结果还是不行。。。</p>
+<p>然后又使用正常的ssh进行登录发现win10本机可以ssh到centos上，但是kali子系统并不行</p>
+<p>报错为：<br>    Warning: Permanently added ‘192.168.2.128’ (ED25519) to the list of known …</p>
+<p>二、解决办法<br>    vi &#x2F;etc&#x2F;ssh&#x2F;ssh_config<br>    在最后修改为：<br>    HashKnownHosts no<br>    GSSAPIAuthentication no<br>    重启终端即可</p>
 ]]></content>
       <categories>
-        <category>docker</category>
         <category>debug</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>红队面试整理（含答案）</title>
+    <url>/2022/07/12/%E7%BA%A2%E9%98%9F%E9%9D%A2%E8%AF%95%E6%95%B4%E7%90%86%EF%BC%88%E5%90%AB%E7%AD%94%E6%A1%88%EF%BC%89/</url>
+    <content><![CDATA[<p>1、渗透的时候如何隐藏自己的身份</p>
+<p>·渗透前挂好vpn，将自己的ip代理到国外，或者通过telnet到肉鸡上，通过肉鸡建立跳板进行渗透<br>·渗透时使用代理池，频繁更换ip<br>·渗透后及时清理渗透痕迹</p>
+<p>2、红队流程</p>
+<p>信息收集→打点→内网渗透→横向移动→权限维持→清理痕迹</p>
+<p>3、信息收集包含哪些内容</p>
+<p>·目标ip、域名、子域名、中间件、cms、c段、端口、whois反查<br>·字典（公司邮箱、电话、人员信息等）</p>
+<p>未完待续。。。。</p>
+]]></content>
+      <categories>
+        <category>红队</category>
       </categories>
   </entry>
 </search>
